@@ -8,6 +8,7 @@ A read-only cryptocurrency research terminal powered by real local inference usi
 - Public Binance data with Binance-data and OKX fallback; explicit source labels.
 - Interactive historical candles, forecast mean, actual sampled scenario paths and live quotes.
 - Chronological walk-forward backtests with MAE, RMSE, directional accuracy and a persistence baseline.
+- Conditional paper signals, volatility-based stops, two profit targets, setup expiry and local-only risk sizing; see [SIGNALS.md](SIGNALS.md).
 - Pinned model/tokenizer revisions, inspected source hashes, strict JSON publication, read-only CI.
 - Local trusted compute; static GitHub Pages frontend; no inbound server, keys, wallets or orders.
 

@@ -24,9 +24,11 @@ const fs=require('fs'),path=require('path'),assert=require('assert');
         await page.locator('[data-interval="'+interval+'"]').click();
         await page.waitForFunction(()=>document.getElementById('notice').hidden,{timeout:20000});
         assert((await page.locator('#predicted').innerText()).includes('USDT'));
-        assert.equal(await page.locator('#evaluation-rows tr').count(),interval==='1h'?72:18);
+        assert.equal(await page.locator('#evaluation-rows tr').count(),JSON.parse(fs.readFileSync(path.join(root,'data',symbol+'_'+interval+'.json'),'utf8')).backtest.count);
         assert.equal(await page.locator('#symbol').innerText(),symbol.replace('USDT',' / USDT'));
         assert(await page.locator('#chart canvas').count()>0);
+        assert(['NO TRADE','PAPER LONG'].includes(await page.locator('#signal-action').innerText()));
+        assert.notEqual(await page.locator('#signal-stop').innerText(),'—');
         total++;
       }
     }
@@ -35,7 +37,12 @@ const fs=require('fs'),path=require('path'),assert=require('assert');
     await page.locator('[data-interval="1h"]').click();
     await page.waitForFunction(()=>document.getElementById('notice').hidden);
     await page.locator('#scenarios').uncheck();await page.locator('#scenarios').check();await page.locator('#fit').click();
-    await page.locator('summary').click();
+    await page.locator('#signal-equity').fill('10000');
+    await page.locator('#signal-risk').fill('1');
+    assert((await page.locator('#signal-notional').innerText()).includes('USDT'));
+    await page.locator('#signal-equity').fill('');
+    assert.equal(await page.locator('#signal-size').innerText(),'Enter an account balance');
+    await page.locator('summary').last().click();
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     await page.screenshot({path:path.join(output,'dashboard-'+viewport.width+'.png'),fullPage:true});
     assert.deepEqual(errors,[]);

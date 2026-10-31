@@ -16,7 +16,7 @@ py -3.11 -m venv .venv
 git clone https://github.com/shiyu-coder/Kronos.git upstream/Kronos
 git -C upstream/Kronos checkout 67b630e67f6a18c9e9be918d9b4337c960db1e9a
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe forecast.py --all --lookback 256 --samples 3 --folds 3
+.\.venv\Scripts\python.exe forecast.py --all --lookback 256 --samples 3 --folds 10
 .\.venv\Scripts\python.exe publish_forecast.py --all
 .\.venv\Scripts\python.exe -m tests.check_public
 ```
@@ -50,7 +50,7 @@ This requires `codex/kronos-production`, the exact intended remote, and an empty
 
 ## Deploy static assets
 
-`python stage_site.py` builds an allowlisted `site/` with five static assets, six validated JSON files and `.nojekyll`. It rejects unexpected files. Deploy that output to the repository's `gh-pages` branch and configure GitHub Pages to use `gh-pages / (root)`. Do not upload the full working directory or virtual environment.
+`python stage_site.py` builds an allowlisted `site/` with seven static assets, six validated JSON files and `.nojekyll`. It rejects unexpected files. Deploy that output to the repository's `gh-pages` branch and configure GitHub Pages to use `gh-pages / (root)`. Do not upload the full working directory or virtual environment.
 
 The initial deployment is an explicitly published static snapshot. Subsequent inference/data commits do not automatically update the deployed snapshot: rebuild `site/`, commit those files to `gh-pages` and push normally. No scheduled task was installed. Refresh the forecasts before their 24-hour horizon expires; quotes independently refresh every 30 seconds.
 
@@ -78,7 +78,11 @@ CI uses read-only repository permissions, pinned action commits, and no model do
 - Sampling: temperature 1.0, top-p 0.9, top-k 0; three separate sample_count=1 calls. Live seeds 42,43,44; evaluation seeds 1000+100*fold+sample. GPU/platform differences may prevent bitwise reproducibility.
 - Displayed prediction is the arithmetic mean of separately retained paths. Higher/lower terminal paths are observed model scenarios, not probabilities, quantiles or calibrated confidence bounds.
 - The model decoder does not enforce candle geometry. We expand each sampled high/low to the extrema of its four raw predicted OHLC values. Open and close are unchanged; this policy is disclosed in every file and on the page.
-- Three non-overlapping 24-hour historical holdouts by default. At every origin, only the preceding lookback candles enter inference and normalization. No future realized prices enter prediction.
+- Ten non-overlapping 24-hour historical holdouts by default. At every origin, only the preceding lookback candles enter inference and normalization. No future realized prices enter prediction.
 - MAE and RMSE compare held-out closes to predicted closes. Directional accuracy compares signs of each target return relative to its own window origin (ties count as a third direction). The persistence baseline repeats the origin close.
-- These are retrospective evaluations generated now, not archived forecasts claimed to have been issued in the past. Model pretraining overlap is unknown. Three windows are too few to establish predictive skill.
+- These are retrospective evaluations generated now, not archived forecasts claimed to have been issued in the past. Model pretraining overlap is unknown. Ten windows remain too few to establish reliable predictive skill.
 - `generated_at` records the start of the calculation after data retrieval, `completed_at` its completion, and `history_as_of` the last completed candle's open time. All timestamps are UTC. Forecast timestamps also label candle opens; the final close occurs one interval after its timestamp.
+
+## Conditional action and risk desk
+
+The dashboard includes spot-only PAPER LONG / NO TRADE screening, entry zones, stops, two profit targets, setup expiry and local-only position sizing. See [SIGNALS.md](SIGNALS.md) for formulas, limits and test coverage. The signals are research rules, not orders or a validated trading strategy. Run inference with ten folds (now the CLI default) to supply the minimum evidence required by this screen.

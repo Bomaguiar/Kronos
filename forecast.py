@@ -114,7 +114,7 @@ def predict(predictor, history, interval, horizon, samples, seed):
 def records(frame):
     return [dict(timestamp=stamp(r.timestamps),**{k:float(r[k]) for k in COLS[:4]}) for _,r in frame.iterrows()]
 
-def forecast(symbol, interval, lookback, pred_len, samples, device, provider="auto", folds=3, predictor=None):
+def forecast(symbol, interval, lookback, pred_len, samples, device, provider="auto", folds=10, predictor=None):
     if not 2<=lookback<=512 or interval not in INTERVAL_SECONDS or pred_len != 86400//INTERVAL_SECONDS[interval]:
         raise ValueError("Use lookback 2..512 and exactly a 24-hour horizon")
     if not 1<=samples<=10 or not 1<=folds<=10: raise ValueError("samples/folds must be 1..10")
@@ -141,7 +141,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--symbol",choices=SYMBOLS,default="BTCUSDT"); parser.add_argument("--interval",choices=tuple(INTERVAL_SECONDS),default=os.getenv("INTERVAL","1h"))
     parser.add_argument("--lookback",type=int,default=int(os.getenv("LOOKBACK","256"))); parser.add_argument("--pred-len",type=int)
-    parser.add_argument("--samples",type=int,default=int(os.getenv("SAMPLE_COUNT","3"))); parser.add_argument("--folds",type=int,default=3)
+    parser.add_argument("--samples",type=int,default=int(os.getenv("SAMPLE_COUNT","3"))); parser.add_argument("--folds",type=int,default=10)
     parser.add_argument("--device",default=os.getenv("DEVICE","auto")); parser.add_argument("--provider",choices=["auto","binance","binance-data","okx"],default=os.getenv("MARKET_PROVIDER","auto"))
     parser.add_argument("--all",action="store_true"); args=parser.parse_args()
     predictor=load_predictor(args.device)

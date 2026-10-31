@@ -13,6 +13,7 @@ const mean=main.addSeries(L.LineSeries,{color:'#6fcfff',lineWidth:2,lineStyle:2,
 const actual=bt.addSeries(L.LineSeries,{color:'#55e3ba',lineWidth:2,priceLineVisible:false});
 const predicted=bt.addSeries(L.LineSeries,{color:'#6fcfff',lineWidth:2,lineStyle:2,priceLineVisible:false});
 function reset(){
+  document.dispatchEvent(new CustomEvent("kronos:data",{detail:null}));
   candles.setData([]); mean.setData([]); actual.setData([]); predicted.setData([]);
   sampleSeries.forEach(s=>main.removeSeries(s)); sampleSeries=[];
   ['predicted','change','last','upper','lower','updated','asof','mae','rmse','direction','baseline'].forEach(id=>$(id).textContent='—');
@@ -41,6 +42,7 @@ async function load(){
     if(!res.ok)throw Error('No published forecast for this selection');
     const j=validate(await res.json(),s,i);
     if(ticket!==request)return;
+    document.dispatchEvent(new CustomEvent('kronos:data',{detail:j}));
     const close=j.forecast.at(-1).close,delta=100*(close/j.historical_last_close-1);
     candles.setData(j.history.map(r=>({time:time(r.timestamp),open:r.open,high:r.high,low:r.low,close:r.close})));
     const anchor={time:time(j.history_as_of),value:j.historical_last_close};
@@ -80,11 +82,11 @@ async function load(){
   }
 }
 async function quotes(){
-  let source='', rows=[];
+  let source='', provider='', rows=[];
   try{
     const r=await fetch('https://data-api.binance.vision/api/v3/ticker/price?symbols='+encodeURIComponent(JSON.stringify(['BTCUSDT','ETHUSDT','SOLUSDT'])),{signal:AbortSignal.timeout(10000)});
     if(!r.ok)throw Error('Binance unavailable');
-    rows=await r.json(); source='Binance public market API';
+    rows=await r.json(); source='Binance public market API'; provider='binance';
   }catch{
     try{
       rows=await Promise.all(['BTC','ETH','SOL'].map(async s=>{
@@ -92,16 +94,19 @@ async function quotes(){
         if(!r.ok)throw Error('OKX unavailable');
         const j=await r.json(); if(j.code!=='0')throw Error('OKX unavailable');
         return {symbol:s+'USDT',price:j.data[0].last};
-      })); source='OKX public market API';
+      })); source='OKX public market API'; provider='okx';
     }catch{
+      document.dispatchEvent(new CustomEvent('kronos:quotes',{detail:[]}));
       ['BTCUSDT','ETHUSDT','SOLUSDT'].forEach(s=>$('quote-'+s).textContent='Unavailable');
       $('live-source').textContent='Live quotes unavailable · Published forecasts remain separate'; return;
     }
   }
   if(!Array.isArray(rows)||rows.length!==3||rows.some(r=>!['BTCUSDT','ETHUSDT','SOLUSDT'].includes(r.symbol)||!Number.isFinite(Number(r.price))||Number(r.price)<=0)){
+    document.dispatchEvent(new CustomEvent('kronos:quotes',{detail:[]}));
     $('live-source').textContent='Live quote validation failed'; return;
   }
   rows.forEach(r=>$('quote-'+r.symbol).textContent=money(Number(r.price)));
+  document.dispatchEvent(new CustomEvent('kronos:quotes',{detail:rows.map(r=>({symbol:r.symbol,price:Number(r.price),source:provider,fetchedAt:Date.now()}))}));
   $('live-source').textContent='Live quotes · '+source+' · Fetched '+new Date().toISOString().slice(11,19)+' UTC · USDT · refreshes every 30s';
 }
 function selection(attr,value){

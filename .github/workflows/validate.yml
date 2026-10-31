@@ -19,4 +19,6 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python -m tests.check_public
       - run: node --check app.js
+      - run: node --check signal-panel.js
+      - run: node --test tests/signals.test.cjs
       - run: python stage_site.py
