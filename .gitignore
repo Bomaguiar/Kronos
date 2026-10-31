@@ -4,3 +4,9 @@ outputs/
 upstream/
 __pycache__/
 *.pyc
+.cache/
+test-results/
+node_modules/
+playwright-report/
+outputs-audit.json
+site/
