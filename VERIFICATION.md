@@ -42,7 +42,17 @@ The 1H forecasts begin at candle open 2026-10-31 01:00 UTC and end at candle clo
 - Upstream source inspected before import and locked with normalized-source SHA256 hashes. No model remote-code execution enabled.
 - Only GET requests go to public exchange endpoints. No exchange authentication, orders or wallets.
 - Static staging emits exactly 12 allowlisted files; excludes Python, local config, caches, model weights and logs.
+- Basic secret/private-path scan passed for all 30 tracked files; all six published JSON documents passed validation.
 - No inbound server, port forwarding, force push, or main merge.
+
+## Verified deployment
+
+- Live dashboard: https://bomaguiar.github.io/Kronos/ (HTTP 200, HTTPS enforced).
+- Static deployment branch: `gh-pages`; GitHub Pages build and deployment succeeded.
+- Review branch: `codex/kronos-production`; pull request: https://github.com/Bomaguiar/Kronos/pull/1.
+- GitHub Actions validation passed on both the branch push and pull request.
+- Repeated all 12 desktop/mobile browser combinations against the live deployment at approximately 02:01 UTC. All passed with zero console errors and working live Binance quotes.
+- Main remains at `5963362b58b40cab2144e1eefa3f1f63c5eaff21`; no merge was performed.
 
 ## Operational limits
 
